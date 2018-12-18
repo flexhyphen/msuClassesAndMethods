@@ -945,19 +945,19 @@ public:
         //cout << endl << "N = "<<  cloudOne.n << endl; //отладка
     }
     
-    void moveCloud(Field &field) { // команда от контроллера интерфейсу  и полю для сдвига облака
+    void moveCloud(Field &field) { // команда от контроллера интерфейсу и полю для сдвига облака
         Point mov = mainInterface.readMove(); // читаем вектор сдвига
         int n = mainInterface.readCloudNumber(field.numOfClouds); // читаем номер облака для сдвига
         field.moveCloud(n, mov); // даем команду полю сдвинуть
     }
     
-    void stretchCloud(Field &field) { // команда от контроллера интерфейсу  и полю для растяжения облака
+    void stretchCloud(Field &field) { // команда от контроллера интерфейсу и полю для растяжения облака
         Point stretch = mainInterface.readStretch(); // читаем коэффициенты растяжения
         int n = mainInterface.readCloudNumber(field.numOfClouds); // читаем номер облака для растяжения
         field.stretchingCloud(n, stretch); // даем команду полю растянуть
     }
     
-    void rotateCloud(Field &field) { // команда от контроллера интерфейсу  и полю для поворота облака
+    void rotateCloud(Field &field) { // команда от контроллера интерфейсу и полю для поворота облака
         double ang = mainInterface.readAngle(); // читаем угол поворота
         int n = mainInterface.readCloudNumber(field.numOfClouds); // читаем номер облака для поворота
         field.rotateCloud(n, ang); // даем команду полю повернуть облако
@@ -1013,9 +1013,18 @@ public:
         plane.matrixOfCloud(field.arrayOfClouds[n - 1]);
     }
     
+    void myOrNot(Field &field) { // команда от контроллера интерфейсу и полю для ответа на вопрос какому кластеру принадлежит точка
+        Point unidefinedPoint = mainInterface.readPoint();
+        char fin[100];
+        string filename = mainInterface.readFileName();
+        strcpy(fin, filename.c_str());
+        unidefinedPoint.printPointInFile(fin);
+        field.myOrNot(unidefinedPoint);
+    }
     
     
-    void createCloudInFile(Field &field, Point ctr, Point Dsp, int numOfPoints) { // функция
+    
+    void createCloudInFile(Field &field, Point ctr, Point Dsp, int numOfPoints) { //команда от контроллера интерфейсу  и полю для создания облака
         //cout << endl << "N = "<<  numOfPoints << endl; //отладка
         Cloud cloudOne(numOfPoints, ctr, Dsp);
         cloudOne.assignNumb();
@@ -1036,41 +1045,41 @@ public:
         field.rotateCloud(n, angle); // даем команду полю повернуть облако
     }
     
-    void printCloudInFile(Field &field, int n) { // // команда от контроллера интерфейсу  и полю для печати облака в консоль
+    void printCloudInFile(Field &field, int n) { // // команда от контроллера интерфейсу и полю для печати облака в консоль
         field.printCloud(n); // даем команду полю напечать
     }
     
-    void rotateCloudCenterMassInFile(Field &field, double angle, int n) {
+    void rotateCloudCenterMassInFile(Field &field, double angle, int n) { //команда от контроллера интерфейсу и полю для повотора относительно центра масс
         field.rotateCloudCenterMass(n, angle);
     }
     
-    void printDistanceMatrixInFile(Field &field) {
+    void printDistanceMatrixInFile(Field &field) {// команда от контроллера интерфейсу и полю для печати матрицы расстояний
         //cout << field.amountOfPointsInField() << endl; // отладка
         field.printDistanceMatrix();
     }
     
-    void printBinaryMatrixInFile(Field &field, double threshold) {
+    void printBinaryMatrixInFile(Field &field, double threshold) { // команда от контроллера интерфейсу и полю для печати бинарной матрицы
         //cout << field.amountOfPointsInField() << endl; // отладка
         field.printBinaryMatrix(threshold);
     }
     
-    void waveAlgorithmInFile(Field &field) {
+    void waveAlgorithmInFile(Field &field) { // команда от контроллера интерфейсу ип полю волновой алгоритм
         field.waveAlgorithm(field.arrayOfClouds[99]);
     }
     
-    void KMeansInFile(Field &field, int k) {
+    void KMeansInFile(Field &field, int k) { // команда от контроллера интерфейсу ип полю для К - средних
         field.KMeans(k, field.arrayOfClouds[99]);
     }
     
-    void KMeansKernelInFile(Field &field, int k, int m) {
+    void KMeansKernelInFile(Field &field, int k, int m) { // команда от контроллера интерфейсу и полю для К - meand kernel trick
         field.KMeansKernel(k, m, field.arrayOfClouds[99]);
     }
     
-    void allFieldFillInFile(Field &field) {
+    void allFieldFillInFile(Field &field) { // команда от контроллера полю для занесения всех точек поля в одно облако
         field.allFieldFill();
     }
     
-    void projectionCloudInFile(Field &field, Plane &plane, int n, int A, int B, int C, int D) {
+    void projectionCloudInFile(Field &field, Plane &plane, int n, int A, int B, int C, int D) { //команда от контроллера интерфейсу и плоскости для проекцирования
         plane.A = A;
         plane.B = B;
         plane.C = C;
@@ -1078,7 +1087,7 @@ public:
         plane.matrixOfCloud(field.arrayOfClouds[n - 1]);
     }
     
-    void myOrNot(Field &field) {
+    void myOrNotInFile(Field &field) { // команда от контроллера интерфейсу и полю для ответа на вопрос какому кластеру принадлежит точка
         Point unidefined = mainInterface.readPoint();
         char fin[100];
         string filename = mainInterface.readFileName();
@@ -1090,8 +1099,8 @@ public:
     void start() { // стартовая команда для запуска приложения
         int valueOfCommand = 0;
         Field field(0); // создаем объект поле
-        Plane plane;
-        double how;
+        Plane plane; // создаем объект класса плоскость
+        double how; // как вводить команды
         Controller mainController; // создаем класс одиночку - основной контроллер
         cout << "Как будем вводить команды 0 - консоль , 1 - файл :" << endl;
         cin >> how;
@@ -1237,7 +1246,7 @@ public:
                         mainController.printBinaryMatrixInFile(field, threshold);
                     }
                     if (valueOfCommand == 11) { // волновой алгоритм
-                        mainController.waveAlgorithm(field);
+                        mainController.waveAlgorithmInFile(field);
                     }
                     if (valueOfCommand == 12) { // печать компоненты в файл
                         char d[100];
@@ -1248,7 +1257,9 @@ public:
                         field.printCompInFile(n, d);
                     }
                     if (valueOfCommand == 13) { // к - средних
-                        mainController.KMeans(field);
+                        int k;
+                        fin >> k;
+                        mainController.KMeansInFile(field, k);
                     }
                     if (valueOfCommand == 14) { // печать кластера в файл
                         char d[100];
@@ -1267,10 +1278,15 @@ public:
                         field.printCloudInFile(100, d);
                     }
                     if (valueOfCommand == 16) { // проекцировать облако
-                        mainController.projectionCloud(field, plane);
+                        int n;
+                        double A, B, C, D;
+                        fin >> n >> A >> B >> C >> D;
+                        mainController.projectionCloudInFile(field, plane, n, A, B, C, D);
                     }
                     if (valueOfCommand == 17) { // к - средних с ядрами
-                        mainController.KMeansKernel(field);
+                        int k, m;
+                        fin >> k >> m;
+                        mainController.KMeansKernelInFile(field, k, m);
                     }
                     if (valueOfCommand == 18) { // печать кластера в файл
                         char d[100];
