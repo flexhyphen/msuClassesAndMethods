@@ -74,6 +74,14 @@ public:
         }
         return isEqual;
     }
+    
+    bool operator != (const Point &point) { // оператор ==
+        bool isEqual = false;
+        if (x != point.x && y != point.y ) {
+            isEqual = true;
+        }
+        return isEqual;
+    }
 
     void printPoint() {
         cout << x << " " << y << " " << z << endl;
@@ -91,7 +99,6 @@ public:
     int n; // число точек в облаке
     int numOfCloud; // персональный номер облака
     Point ctr; // центр
-    //double xDsp, yDsp;
     Point DSP; // дисперсия
     Point *arrayOfPoints; // массив точек
     
@@ -163,7 +170,7 @@ public:
     void printCloudInFile(int n, const char *fileName) { //печать облака в файл
         ofstream fout(fileName);
         for (int k = 0; k < n; k++) {
-            fout << arrayOfPoints[k].x << " " << arrayOfPoints[k].y << " " << arrayOfPoints[k].z << endl;
+            fout << arrayOfPoints[k].x << " " << arrayOfPoints[k].y << endl;
         }
     }
     
@@ -206,7 +213,7 @@ public:
         }
     }
     
-    void printCloudInFile3DwithNoise(const char *FileName) {
+    void printCloudInFile3DwithNoise(const char *FileName) { // печать облака с шумом (для проекции)
         ofstream fout(FileName);
         for (int k = 0; k < n; k++) {
             fout<<arrayOfPoints[k].x<<"   "<< arrayOfPoints[k].y << "   "<< arrayOfPoints[k].z + arrayOfPoints[k].delta << "\n";
@@ -216,29 +223,29 @@ public:
 };
 
 
-class Plane {
+class Plane { //класс плоскость
 public:
     double A, B, C, D;// koehffy ploskosti
     double eigenValue1, eigenValue2, eigenValue3; // sobstvennye chisla
     Point eigenVector1, eigenVector2, eigenVector3; // sobstvennye vektora
-    double matrix[3][3];
+    double matrix[3][3]; // матрица из точек облака
     
-    Plane(double a = 1, double b = 1, double c = 1, double d = 1) {
+    Plane(double a = 1, double b = 1, double c = 1, double d = 1) { // конструктор плоскости
         A = a;
         B = b;
         C = c;
         D = d;
     }
     
-    void matrixOfCloud(Cloud &cloud) {
+    void matrixOfCloud(Cloud &cloud) { // функция для нахождения проекции облака на плоскость и нахождения и вывода собственных значений
         int amountOfPoints = cloud.n;
         double x[amountOfPoints][3];
         
         for (int i = 0; i < amountOfPoints; i++) {
             Point p = cloud.arrayOfPoints[i];
-            double s = -(A * p.x + B * p.y + D) / C;
+            double s = -(A * p.x + B * p.y + D) / C; // координата Z после проекции
             if (abs(C) > 0.000001) {
-                cloud.arrayOfPoints[i].z = s;
+                cloud.arrayOfPoints[i].z = s; // присваиваем координату
             }
             double sumx = 0;
             for (int j = 0; j < 100; j++) {
@@ -247,6 +254,7 @@ public:
             double delta = sumx / 100;
             cloud.arrayOfPoints[i].delta = delta;
         }
+        
         cloud.printCloudInFile3DwithNoise("main.txt");
         for(int i = 0; i < 3; i++){
             for (int j = 0; j < 3; j++) {
@@ -272,21 +280,18 @@ public:
         eigenVector1 = eigenVector(matrix, eigenValue1);
         eigenVector2 = eigenVector(matrix, eigenValue2);
         eigenVector3 = eigenVector(matrix, eigenValue3);
-        ofstream fout1("v1.txt");
-        fout1 << cloud.ctr.x << " " << cloud.ctr.y << " " << cloud.ctr.z << " ";
-        fout1 << cloud.ctr.x + eigenVector1.x << " " << cloud.ctr.y + eigenVector1.y << " " << cloud.ctr.z + eigenVector1.z ;
+        ofstream fout1("eigenVector1.txt");
+        fout1 << cloud.ctr.x << " " << cloud.ctr.y << " " << cloud.ctr.z << " " << cloud.ctr.x + eigenVector1.x << " " << cloud.ctr.y + eigenVector1.y << " " << cloud.ctr.z + eigenVector1.z ;
         
-        ofstream fout2("v2.txt");
-        fout2 << cloud.ctr.x << " " << cloud.ctr.y << " " << cloud.ctr.z << " ";
-        fout2 << cloud.ctr.x + eigenVector2.x << " " << cloud.ctr.y + eigenVector2.y << " " << cloud.ctr.z + eigenVector2.z;
+        ofstream fout2("eigenVector2.txt");
+        fout2 << cloud.ctr.x << " " << cloud.ctr.y << " " << cloud.ctr.z << " " << cloud.ctr.x + eigenVector2.x << " " << cloud.ctr.y + eigenVector2.y << " " << cloud.ctr.z + eigenVector2.z;
         
-        ofstream fout3("v3.txt");
-        fout3 << cloud.ctr.x << " " << cloud.ctr.y << " " << cloud.ctr.z << " ";
-        fout3 << cloud.ctr.x + eigenVector3.x << " " << cloud.ctr.y + eigenVector3.y << " " << cloud.ctr.z + eigenVector3.z;
+        ofstream fout3("eigenVector3.txt");
+        fout3 << cloud.ctr.x << " " << cloud.ctr.y << " " << cloud.ctr.z << " " << cloud.ctr.x + eigenVector3.x << " " << cloud.ctr.y + eigenVector3.y << " " << cloud.ctr.z + eigenVector3.z;
         
     }
     
-    void findEigenValues(){
+    void findEigenValues(){  // функция нахождения собственных чисел
         double trace = 0; // sled
         for (int i = 0; i < 3; i++) {
             trace += matrix[i][i]; // ishchem sled
@@ -324,13 +329,13 @@ public:
         eigenValue2 = 3 * q - eigenValue1 - eigenValue3;
     }
     
-    double findDeterminant3x3(double a[3][3]) {
+    double findDeterminant3x3(double a[3][3]) { // функция нахождения определителя матрицы 3 на 3
         double det = 0;
         det = a[0][0] * a[1][1] * a[2][2] + a[0][1] * a[1][2] * a[2][0] + a[0][2] * a[1][0] * a[2][1] - a[2][0] * a[1][1] * a[0][2] - a[1][0] * a[0][1] * a[2][2] - a[2][1] * a[1][2] * a[0][0];
         return det;
     }
     
-    Point eigenVector(double matr[3][3], double eigenValue) {
+    Point eigenVector(double matr[3][3], double eigenValue) { // функция нахождения собственного вектора по заданомму собственному числу в матрице 3*3
         Point vector;
         vector.z = 1;
         double oper[3][3];
@@ -357,23 +362,28 @@ public:
     int numOfComponents; // количество компонент
     int numOfClasters; // количество кластеров
     int numOfClastKernel; // количество кластеров с ядрами
+    int numOfClastScales; //
     Cloud *arrayOfClouds; // массив облаков
     Cloud *arrayOfComp; // массив компонент
     Cloud *arrayOfClasters; // массив кластеров
     Cloud *arrayOfClastKern; // ядра
+    Cloud *arrayOfClastScales; // массив чешуек
     double **distanceMatrix; // матрица расстояний
     int **binaryMatrix; // бинарная матрица
-    Point *cklast; // массив центров кластеров
+    Point *ctrOfClast; // массив центров кластеров
     Point *ctrOfClastKern; // массив центров кластеров после k means kernel trick
-    Field (int n = 0, int m = 0, int d = 0, int l = 0) { // конструктор поля
+    Cloud ctrOfClastScale; // массив центров после алгоритма ForEl
+    Field (int n = 0, int m = 0, int d = 0, int l = 0, int s = 0) { // конструктор поля
         arrayOfClouds = new Cloud[100]; // создаем массив на 100 потенциальных облаков
         arrayOfComp = new Cloud [100]; // создаем массив на 100 потенциальных компонент
-        arrayOfClasters = new Cloud [100];
-        arrayOfClastKern = new Cloud[100];
-        numOfClouds = n;
-        numOfComponents = m;
-        numOfClasters = d;
-        numOfClastKernel = l;
+        arrayOfClasters = new Cloud [100]; // создаем массив на 100 потенциальных кластеров
+        arrayOfClastKern = new Cloud[100];// создаем массив на 100 потенциальных кластеров с ядрами
+        arrayOfClastScales = new Cloud[1000]; //создаем массив на 1000 потенциальных кластеров-scalesов
+        numOfClouds = n; // число облаков
+        numOfComponents = m; // число компонент
+        numOfClasters = d; // число кластеров
+        numOfClastKernel = l; // число кластеров с ядрами
+        numOfClastScales = s; // число кластеров-scalesов
     }
     
     void addCloud(Cloud &cloud) { // команда полю добавить облако
@@ -395,7 +405,6 @@ public:
     
     void printCloud(int cloudNum) { // команда полю напечатать одно из его облаков в консоль
         arrayOfClouds[cloudNum - 1].printCloud();
-        //       cout << endl << "WORKED1"<< endl;
     }
     
     void printCloudInFile(int cloudNum, const char *fileName) { // команда полю напечатать одно из его облаков
@@ -418,7 +427,7 @@ public:
         arrayOfClouds[cloudNum - 1].cloudRotateCenterMass(arrayOfClouds[cloudNum - 1].n, ang);
     }
     
-    double distance(Point one, Point two) { // функция поиска расстояния между двумя точками поля
+    double myDistance(Point one, Point two) { // функция поиска расстояния между двумя точками поля
         double sumX, sumY;
         sumX = abs(one.x - two.x);
         sumY = abs(one.y - two.y);
@@ -455,7 +464,7 @@ public:
         arrayOfClouds[99] = cloudAllPoints;
     }
     
-    void distanceMatrixFill() { // заполнение матрицы расстояний
+    void distanceMatrixFill(Cloud &needPoints) { // заполнение матрицы расстояний
         int amountOfPoints = amountOfPointsInField(); // число точек поля
         allFieldFill(); // заполнение последнего облака всеми предидущими облаками
         distanceMatrix = new double *[amountOfPoints]; // матрица расстояний
@@ -464,7 +473,7 @@ public:
         }
         for (int i = 0; i < amountOfPoints; i++){
             for (int k = i; k < amountOfPoints; k++) {
-                distanceMatrix[k][i] = distanceMatrix[i][k] =  distance(arrayOfClouds[99].arrayOfPoints[i], arrayOfClouds[99].arrayOfPoints[k]);
+                distanceMatrix[k][i] = distanceMatrix[i][k] =  myDistance(needPoints.arrayOfPoints[i], needPoints.arrayOfPoints[k]);
                 //cout << distanceMatrix[i][k] << "отладка" << endl;
             }
         }
@@ -473,7 +482,7 @@ public:
     void printDistanceMatrix() { // печать двоичной матрицы для отладки
         int amountOfPoints = amountOfPointsInField();
         cout << "Матрица расстояний: " << endl;
-        distanceMatrixFill();
+        distanceMatrixFill(arrayOfClouds[99]);
         for (int i = 0; i < amountOfPoints; i++){
             for (int k = 0; k < amountOfPoints; k++) {
                 cout << distanceMatrix[i][k] << " ";
@@ -484,7 +493,7 @@ public:
     
     void binaryMatrixFill(double threshold) { // заполнение бинарной матрицы
         int amountOfPoints = amountOfPointsInField(); // число точек поля
-        distanceMatrixFill(); // заполняем матрицу расстояний
+        distanceMatrixFill(arrayOfClouds[99]); // заполняем матрицу расстояний
         binaryMatrix = new int *[amountOfPoints];
         for (int i = 0; i < amountOfPoints; i++) {
             binaryMatrix[i] = new int [amountOfPoints];
@@ -603,13 +612,13 @@ public:
             for (i = 0; i < amountOfPoints; i++) { // проходим по каждой точке и относим ее к кластеру
                 change = false; // меняем флажок
                 temp = marks[i]; // запоминаем начальную метку точки
-                threshold = distance(cloud.arrayOfPoints[i], centres[0]); //расстояние между центром первого кластера и i-ой точкой поля
+                threshold = myDistance(cloud.arrayOfPoints[i], centres[0]); //расстояние между центром первого кластера и i-ой точкой поля
                 marks[i] = 0;
                 
                 for (j = 1; j < k; j++) {
-                    if (distance(cloud.arrayOfPoints[i], centres[j]) < threshold) { //если расстояние от i-ой точки до j-ого центра меньше начального
+                    if (myDistance(cloud.arrayOfPoints[i], centres[j]) < threshold) { //если расстояние от i-ой точки до j-ого центра меньше начального
                         marks[i] = j; // i-ая точка принадлежит j-ому центру
-                        threshold = distance(cloud.arrayOfPoints[i], centres[j]); // меняем порог расстояния
+                        threshold = myDistance(cloud.arrayOfPoints[i], centres[j]); // меняем порог расстояния
                     }
                 }
                 
@@ -641,10 +650,10 @@ public:
             arrayOfClasters[i] = claster;  // присваиваем массив кластеров
         }
 
-        cklast = new Point[k]; // инициализация массива центров кластеров
+        ctrOfClast = new Point[k]; // инициализация массива центров кластеров
         
         for (i = 0; i < k; i++) {
-            cklast[i] = centres[i]; // заполняем массив центров
+            ctrOfClast[i] = centres[i]; // заполняем массив центров
         }
         
         delete [] ctrOfMass; delete [] pointsInClast; delete [] centres; delete [] marks; // чистка памяти
@@ -652,36 +661,38 @@ public:
         
     }
     
-    void KMeansKernel(int k, int m, const Cloud &cloud) {
-        void(KMeans(k, cloud)); //  изначально разбиваем наше множество на К кластеров
-        int i, j, h, amountOfPoints = amountOfPointsInField(), mark1;
-        Cloud *sgust = new Cloud[k];
+    void KMeansKernel(int k, int m, const Cloud &cloud) { // функция К-means Kernel Trick
+        KMeans(k, cloud); //  изначально разбиваем наше множество на К кластеров
+        int i, j, h, amountOfPoints = amountOfPointsInField(), mark1, t = 0;
         Point *centres = new Point[m * k]; // инициализируем центры с ядрами
         int *pointInClast = new int [k];
         int *marks = new int [amountOfPoints]; // массив принадлежности точек поля к кластерам
         double distation, temp, xCTR, yCTR; // порог расстояния / переменная для свапа расстояния / центр масс Х / центр масс У
         bool change = true;
         Point *ctrOfMass = new Point [k];//центры кластеров
+        
         for (i = 0; i < k; i++) {
-            sgust[i] = arrayOfClasters[i]; // заполняем вспомогательный массив кластеров
+            arrayOfClastKern[i] = arrayOfClasters[i]; // заполняем вспомогательный массив кластеров
         }
         
         for (i = 0; i < amountOfPoints; i++) {
             marks[i] = (-1); // заполняем массив приндлежности точек кластерам
         }
+        
         for (i = 0; i < k; i++) {
             ctrOfMass[i] = Point(0, 0); // массив центров
             pointInClast[i] = 0; // заполняем массив числа точек в кластере
         }
+        
         while (change == true) { // пока центры изменяются
             for (i = 0; i < k; i++) {
                 ctrOfMass[i] = Point(0, 0); // массив центров
                 pointInClast[i] = 0; // заполняем массив числа точек в кластере
             }
             for (i = 0; i < k; i++) {
-                void(KMeans(m, sgust[i])); // разбиваем каждый кластер на m подкластеров
+                KMeans(m, arrayOfClastKern[i]); // разбиваем каждый кластер на m подкластеров
                 for(j = 0; j < m; j++) {
-                    centres[i * m + j] = Point(cklast[j].x, cklast[j].y); // запмнили центры
+                    centres[i * m + j] = Point(ctrOfClast[j].x, ctrOfClast[j].y); // запмнили центры
                 }
             }
             
@@ -690,12 +701,12 @@ public:
                 mark1 = marks[i];
                 distation = temp = 0;
                 for (h = 0; h < m; h++) {
-                    distation += distance(cloud.arrayOfPoints[i], (centres[h]));
+                    distation += myDistance(cloud.arrayOfPoints[i], (centres[h]));
                 }
                 marks[i] = 0;
                 for (j = 1; j < k; j++) {
                     for (h = 0; h < m; h++) {
-                        temp += distance(cloud.arrayOfPoints[i], (centres[j * m + h]));
+                        temp += myDistance(cloud.arrayOfPoints[i], (centres[j * m + h]));
                     }
                     if (temp < distation) {//если расстояние от i-ой точки меньше до другого центра меньше
                     marks[i] = j;
@@ -710,13 +721,12 @@ public:
                 }
             }
 
-            for (j = 0; j < k; j++) {
+            for (j = 0; j < k; j++) { // меняем центры
                 xCTR = ctrOfMass[j].x / pointInClast[j];
                 yCTR = ctrOfMass[j].y / pointInClast[j];
                 ctrOfMass[j] = Point(xCTR, yCTR);
             }
            
-            int t;
             for(i = 0; i < k; i++) {
                 Cloud ClastKern(pointInClast[i], (static_cast<void>(ctrOfMass[i].x), ctrOfMass[i].y), (static_cast<void>(1), 1));
                 t = 0;
@@ -735,17 +745,17 @@ public:
             ctrOfClastKern[i] = centres[i];
         }
         numOfClastKernel = k;
-        delete [] ctrOfMass; delete [] pointInClast; delete [] centres; delete [] marks; delete [] sgust;
+        delete [] ctrOfMass; delete [] pointInClast; delete [] centres; delete [] marks;
       
     }
     
-    int myOrNot(Point &undefinded , double threshold) {
+    int myOrNot(Point &undefinded , double threshold) { // функция оценки принадлежности точки какому либо из кластеров по порогу окрестности
         int k = 10000, m;
         int claster = 0;
 
         for (int l = 0; l < numOfClasters; l++) {
             for (int s = 0; s < arrayOfClasters[l].n; s++) {
-                m = distance(undefinded, arrayOfClasters[l].arrayOfPoints[s]);
+                m = myDistance(undefinded, arrayOfClasters[l].arrayOfPoints[s]);
                 if (k > m) {
                     claster = l;
                     k = m;
@@ -760,9 +770,142 @@ public:
             return -1;
         }
     }
+    
+    void directLine(const char *filename) {
+        int N, count; // размер массива хМассив и уМассив
+        double left, right, top, bot, lenghtOfCell, widthOfCell;
+        allFieldFill(); // заполняем все облака в последнее облако
+        N = arrayOfClouds[99].n; // присваиваем число точек в последнем облаке размеру массива
+        count = ((int) sqrt(N / 100)) + 2;
+        left = arrayOfClouds[99].arrayOfPoints[0].x;
+        right = arrayOfClouds[99].arrayOfPoints[0].x;
+        top = arrayOfClouds[99].arrayOfPoints[0].y;
+        bot = arrayOfClouds[99].arrayOfPoints[0].y;
+        for (int i = 1; i < N; i++) {
+            if (arrayOfClouds[99].arrayOfPoints[i].x < left) {
+                left = arrayOfClouds[99].arrayOfPoints[i].x;
+            }
+            else if (arrayOfClouds[99].arrayOfPoints[i].x > right) {
+                right = arrayOfClouds[99].arrayOfPoints[i].x;
+            }
+            if (arrayOfClouds[99].arrayOfPoints[i].y < bot) {
+                bot = arrayOfClouds[99].arrayOfPoints[i].y;
+            }
+            else if (arrayOfClouds[99].arrayOfPoints[i].y > top) {
+                top = arrayOfClouds[99].arrayOfPoints[i].y;
+            }
+        }
+        lenghtOfCell = fabs((right - left) / count);
+        widthOfCell = fabs((top - bot) / count);
+        ofstream fout(filename);
+        for (int i = 0; i < count + 1; i ++) {
+            fout << endl << left + i * lenghtOfCell << " " << bot << endl;
+            fout << left + i * lenghtOfCell << " " << top << endl;
+            fout << endl << left << " " << bot + i * widthOfCell << endl;
+            fout << right << " " << bot + i * widthOfCell << endl;
+        }
+        //fout << /*from x*/ x1 << /* to */ x2 << /* with interval*/ Min;
+        //fout << /*from y*/ y1 << /* to */ y2 << /* with interval*/ Min;
+    }
+    
+    bool IsClasterisationNotFinished(int n, int *marks) {
+        for (int i = 0; i < n; i++) {
+            if (marks[i] == 0){
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    int randomPoint(int n, int *marks) {
+        int random = 0;
+        for (int i = 0; i < n; i++) {
+            random = rand() % n;
+            if (marks[random] == 0) {
+                cout << endl << random << endl;
+                return random;
+            }
+        }
+        return random;
+    }
+    
+    Point pointCentrMass(int n, int *marks) {
+        double sumX = 0;
+        double sumY = 0;
+        int count = 0;
+        for (int i = 0; i < n; i++) {
+            if(marks[i] == 1) {
+                sumX += arrayOfClouds[99].arrayOfPoints[i].x;
+                sumY += arrayOfClouds[99].arrayOfPoints[i].y;
+                count++;
+            }
+        }
+        sumX /= count;
+        sumY /= count;
+        Point point(sumX, sumY);
+        return point;
+    }
+    
+    
+    void ForEl(double R, const char *filename) {
+        allFieldFill();
+        int amountOfPoints = amountOfPointsInField();
+        Point *centr = new Point[amountOfPoints];
+        int random;
+        int pointsInClast = 0;
+        Point currentCentr, currentCentrMass;
+        int *marks = new int [amountOfPoints];
+        for (int i = 0; i < amountOfPoints; i++) {
+            marks[i] = 0;
+        }
+        while (IsClasterisationNotFinished(amountOfPoints, marks)) {
+            random = randomPoint(amountOfPoints, marks);
+            currentCentr = arrayOfClouds[99].arrayOfPoints[random];
+            marks[random] = 1;
+
+            for (int i = 0; i < amountOfPoints; i++) {
+                if ((myDistance(arrayOfClouds[99].arrayOfPoints[i], currentCentr) < R) && (marks[i] != -1)) {
+                    marks[i] = 1;
+                }
+            }
+            currentCentrMass = pointCentrMass(amountOfPoints, marks);
+            cout << endl << "START CENTR "<< currentCentrMass.x << " " << currentCentrMass.y << endl;
+            while (!(currentCentrMass == currentCentr)) {
+                //cout << endl << "Проверка2" << endl;
+                pointsInClast = 0;
+                currentCentr = currentCentrMass;
+                for (int i = 0; i < amountOfPoints; i++) {
+                    if (marks[i] != -1) {
+                        marks[i] = 0;
+                        if (myDistance(arrayOfClouds[99].arrayOfPoints[i], currentCentr) < R) {
+                            marks[i] = 1;
+                            pointsInClast++;
+                        }
+                    }
+                }
+                currentCentrMass = pointCentrMass(amountOfPoints, marks);
+                //cout << endl << "CURRENT CENTR "<< currentCentrMass.x << " " << currentCentrMass.y << endl;
+            }
+            //cout << endl << "LAST CENTR "<< currentCentrMass.x << " " << currentCentrMass.y << endl;
+            centr[numOfClastScales] = currentCentrMass;
+            numOfClastScales++;
+            for (int i = 0; i < amountOfPoints; i++) {
+                if(marks[i] == 1) {
+                    marks[i] = -1;
+                }
+            }
+        }
+        Cloud ctrOfClastScale(numOfClastScales, (static_cast<void>(0), 0), (static_cast<void>(0), 0));
+        ofstream fout(filename);
+        for (int i = 0; i < numOfClastScales; i++) {
+            ctrOfClastScale.arrayOfPoints[i] = centr[i];
+            cout <<  ctrOfClastScale.arrayOfPoints[i].x << " " << ctrOfClastScale.arrayOfPoints[i].y << endl;
+            cout <<  centr[i].x << " " << centr[i].y << endl;
+        }
+    }
 };
 
-class Interface {
+class Interface { // класс интерфейс
     
 public:
     string command;
@@ -789,9 +932,11 @@ public:
         if (command == "KERNEL") return 17;
         if (command == "SAVEKERNIN") return 18;
         if (command == "MYORNOT") return 19;
+        if (command == "DIRECT") return 22;
+        if (command == "FOREL") return 21;
 
         if (command == "HELP") {
-            printf(" CREATE - создать облако \n STRETCH - растянуть облако \n DELETE - удалить облако \n SAVE - сохранить облако \n ROTATE - повернуть облако  \n MOVE - сдвинуть облако \n SAVEINFILE - сохранить в файл \n ROTATECM - поворот относительно центра масс \n PRINTDA - печать матрицы расстояний \n PRINTBA - печать матрицы расстояний бинарной \n WAVE - волновой алгоритм \n SAVECOMP - сохранить все компоненты в один файл \n KMEANS - К-Средних \n SAVECLASTIN - сохранить все компоненты в один файл \n KERNEL - K-means с ядрами \n SAVEKERNIN - печать кластера с ядром \n MYORNOT - свой или чужой \n");
+            printf(" CREATE - создать облако \n STRETCH - растянуть облако \n DELETE - удалить облако \n SAVE - сохранить облако \n ROTATE - повернуть облако  \n MOVE - сдвинуть облако \n SAVEINFILE - сохранить в файл \n ROTATECM - поворот относительно центра масс \n PRINTDA - печать матрицы расстояний \n PRINTBA - печать матрицы расстояний бинарной \n WAVE - волновой алгоритм \n SAVECOMP - сохранить все компоненты в один файл \n KMEANS - К-Средних \n SAVECLASTIN - сохранить все компоненты в один файл \n KERNEL - K-means с ядрами \n SAVEKERNIN - печать кластера с ядром \n MYORNOT - свой или чужой \n PROJ - проекция облака на плоскость и собственные векторы \n FIELDFILL - заполнение последнего облака всеми облаками поля \n DIRECT - сделать сетку \n FOREL - алгоритм форел \n");
             return 20;
         }
         if (command == "EXIT") return -1;
@@ -820,6 +965,8 @@ public:
         if (nameOfCommand == "KERNEL") return 17;
         if (nameOfCommand == "SAVEKERNIN") return 18;
         if (nameOfCommand == "MYORNOT") return 19;
+        if (nameOfCommand == "DIRECT") return 22;
+        if (nameOfCommand == "FOREL") return 21;
         if (nameOfCommand == "EXIT") return -1;
         
         cout << "КОМАНДА НЕ НАЙДЕНА" << endl;
@@ -853,6 +1000,15 @@ public:
     int readNumberOfPoints() { // функция интерфейса чтение кол-ва точек в создаваем облаке
         int n;
         cout << endl << "Введите количество точек в облаке : " << endl;
+        cout << "n = " ;
+        cin >> n;
+        //cout << n; //  отладка
+        return n;
+    }
+    
+    int readNumberOfPointsInRectange() { // функция интерфейса чтение кол-ва точек в создаваем облаке
+        int n;
+        cout << endl << "Введите количество точек в прямоугольнике : " << endl;
         cout << "n = " ;
         cin >> n;
         //cout << n; //  отладка
@@ -936,6 +1092,14 @@ public:
         cout << endl << "K = " ;
         cin >> k;
         return k;
+    }
+    
+    int readR() { // функция считывания порога для заполнения бинарной матрицы
+        int R;
+        cout << "Введите R: ";
+        cout << endl << "R = " ;
+        cin >> R;
+        return R;
     }
     
     int readKernel() { // функция считывания порога для заполнения бинарной матрицы
@@ -1146,10 +1310,8 @@ public:
         Plane plane; // создаем объект класса плоскость
         double how; // как вводить команды
         Controller mainController; // создаем класс одиночку - основной контроллер
-        cout << "Как будем вводить команды 0 - консоль , 1 - файл :" << endl;
-        cout << "DONE" << endl;
+        cout << "Как будем вводить команды 0 - консоль , 1 - файл : " ;
         cin >> how;
-        cout << how;
         if(how == 0){
             while (valueOfCommand != -1){ // читаем команды с консоли пока не будет EXIT
                 valueOfCommand = mainInterface.readCommand();
@@ -1224,8 +1386,21 @@ public:
                     strcpy(fin, filename.c_str());
                     field.printKernInFile(n, fin);
                 }
-                if (valueOfCommand == 19) {
+                if (valueOfCommand == 19) { // свой или чужой
                     mainController.myOrNot(field);
+                }
+                if (valueOfCommand == 22) { // сетка
+                    char fin[100];
+                    string filename = mainInterface.readFileName();
+                    strcpy(fin, filename.c_str());
+                    field.directLine(fin);
+                }
+                if (valueOfCommand == 21) {
+                    int R = mainInterface.readR();
+                    char fin[100];
+                    string filename = mainInterface.readFileName();
+                    strcpy(fin, filename.c_str());
+                    field.ForEl(R, fin);
                 }
             }
         }
@@ -1348,6 +1523,15 @@ public:
                     fin >> n >> filename;
                     strcpy(d, filename.c_str());
                     field.printKernInFile(n, d);
+                }
+                
+                if (valueOfCommand == 22) { // сетка
+                    char d[100];
+                    int n;
+                    string filename;
+                    fin >> n >> filename;
+                    strcpy(d, filename.c_str());
+                    field.directLine(d);
                 }
             }
             fin.close();
